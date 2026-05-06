@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>لعبة بطاقات مونا الصينية</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, "Noto Sans Arabic", sans-serif;
+      background:
+        linear-gradient(rgba(255,235,200,0.75), rgba(255,225,180,0.82)),
+        url('https://images.unsplash.com/photo-1509316785289-025f5b846b35?q=80&w=1600&auto=format&fit=crop');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      color: #222;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 20px;
+      padding: 20px;
+      direction: rtl;
+    }
+
+    .game-panel, .lyrics-panel {
+      backdrop-filter: blur(6px);
+      background: #f7f7f7;
+      border: 2px solid #ddd;
+      border-radius: 24px;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.08);
+      padding: 22px;
+    }
+
+    .game-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 18px;
+    }
+
+    h1, h2 {
+      margin: 0;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 28px;
+    }
+
+    h2 {
+      font-size: 22px;
+      margin-bottom: 12px;
+    }
+
+    .status-bar {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 18px;
+      font-weight: 700;
+      background: #fff;
+      padding: 12px 16px;
+      border-radius: 16px;
+      border: 1px solid #ddd;
+    }
+
+    .big-card {
+      width: 100%;
+      min-height: 230px;
+      background: #ffffff;
+      border: 4px solid #222;
+      border-radius: 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px;
+    }
+
+    .hanzi {
+      direction: ltr;
+      font-size: 58px;
+      font-weight: 900;
+      line-height: 1.1;
+      margin-bottom: 16px;
+    }
+
+    .pinyin {
+      direction: ltr;
+      font-size: 28px;
+      color: #555;
+      line-height: 1.25;
+    }
+
+    .options {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .option-btn {
+      min-height: 92px;
+      border: 3px solid #222;
+      border-radius: 20px;
+      background: #fff;
+      font-size: 22px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.15s, background 0.15s;
+      padding: 12px;
+    }
+
+    .option-btn:hover {
+      transform: translateY(-3px);
+      background: #f0f0f0;
+    }
+
+    .option-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.9;
+    }
+
+    .correct-answer {
+      border: 4px solid #1f9d55 !important;
+      background: #d7ffe5 !important;
+      color: #14532d;
+    }
+
+    .wrong-answer {
+      border: 4px solid #dc2626 !important;
+      background: #ffe0e0 !important;
+      color: #7f1d1d;
+    }
+
+    .feedback {
+      width: 100%;
+      min-height: 60px;
+      background: #fff;
+      border-radius: 16px;
+      border: 1px solid #ddd;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 12px;
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .main-btn {
+      flex: 1;
+      border: none;
+      border-radius: 16px;
+      background: #222;
+      color: #fff;
+      font-size: 20px;
+      font-weight: 700;
+      padding: 14px;
+      cursor: pointer;
+    }
+
+    .lyrics-panel {
+      max-height: calc(100vh - 40px);
+      overflow-y: auto;
+      direction: rtl;
+    }
+
+    .lyrics-block {
+      direction: ltr;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 18px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+
+    .lyric-hanzi {
+      font-size: 24px;
+      font-weight: 900;
+      line-height: 1.45;
+    }
+
+    .lyric-pinyin {
+      font-size: 16px;
+      color: #666;
+      line-height: 1.35;
+      margin-top: 4px;
+    }
+
+    .result-screen {
+      display: none;
+      width: 100%;
+      background: #fff;
+      border: 4px solid #222;
+      border-radius: 28px;
+      padding: 28px;
+      text-align: center;
+    }
+
+    .result-screen .score-big {
+      font-size: 54px;
+      font-weight: 900;
+      margin: 14px 0;
+    }
+
+    @media (max-width: 900px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .options {
+        grid-template-columns: 1fr;
+      }
+
+      .lyrics-panel {
+        max-height: none;
+      }
+
+      .hanzi {
+        font-size: 44px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="welcomeScreen" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:#eeeeee;direction:rtl;">
+    <section style="max-width:760px;background:#fff;border:4px solid #222;border-radius:30px;padding:34px;text-align:center;box-shadow:0 10px 32px rgba(0,0,0,0.12);">
+      <h1 style="font-size:34px;margin-bottom:18px;">أهلاً مونا!</h1>
+      <p style="font-size:22px;line-height:1.8;margin:0 0 16px;">هذه لعبة بطاقات صينية مع أغنية خاصة لك.</p>
+      <p style="font-size:21px;line-height:1.8;margin:0 0 16px;">سترين في الأعلى الكلمة الصينية مع البينين، وفي الأسفل ثلاث ترجمات بالعربية. اختاري الترجمة الصحيحة.</p>
+      <p style="font-size:21px;line-height:1.8;margin:0 0 22px;">يمكنك أيضاً قراءة كلمات الأغنية في الجهة اليمنى والغناء معها أثناء اللعب.</p>
+      <button onclick="startGameWithMusic()" style="border:none;border-radius:18px;background:#222;color:#fff;font-size:24px;font-weight:800;padding:16px 38px;cursor:pointer;">ابدئي اللعبة</button>
+    </section>
+  </div>
+
+  <audio id="bgMusic" src="MUNA.mp3" loop controls style="position:fixed;left:18px;bottom:18px;z-index:999;background:rgba(255,255,255,0.85);padding:8px;border-radius:14px;box-shadow:0 4px 14px rgba(0,0,0,0.15);"></audio>
+
+  <main id="mainApp" class="app" style="display:none;">
+    <section class="game-panel">
+      <h1>لعبة بطاقات الكلمات الصينية لمونا</h1>
+      <div class="status-bar">
+        <div>السؤال: <span id="questionNumber">1</span> / <span id="totalQuestions">0</span></div>
+        <div>النقاط: <span id="score">0</span></div>
+      </div>
+
+      <div id="quizArea" style="width:100%; display:flex; flex-direction:column; gap:18px; align-items:center;">
+        <div class="big-card">
+          <div id="hanzi" class="hanzi">中文</div>
+          <div id="pinyin" class="pinyin">Zhōngwén</div>
+        </div>
+
+        <div id="options" class="options"></div>
+        <div id="feedback" class="feedback">اختر الترجمة الصحيحة</div>
+      </div>
+
+      <div id="resultScreen" class="result-screen">
+        <h2>انتهت اللعبة!</h2>
+        <div class="score-big"><span id="finalScore">0</span>%</div>
+        <h2 id="finalMessage">رائع!</h2>
+      </div>
+
+      <div class="controls">
+        <button class="main-btn" onclick="restartGame()">إعادة اللعب</button>
+      </div>
+    </section>
+
+    <aside class="lyrics-panel">
+      <h2>كلمات الأغنية</h2>
+      <div id="lyrics"></div>
+    </aside>
+  </main>
+
+  <script>
+    const cards = [
+      { hanzi: "晚上", pinyin: "wǎnshàng", ar: "المساء / الليل" },
+      { hanzi: "現在", pinyin: "xiànzài", ar: "الآن" },
+      { hanzi: "外面", pinyin: "wàimiàn", ar: "الخارج" },
+      { hanzi: "很", pinyin: "hěn", ar: "جداً" },
+      { hanzi: "熱", pinyin: "rè", ar: "حار" },
+      { hanzi: "可是", pinyin: "kěshì", ar: "لكن" },
+      { hanzi: "風", pinyin: "fēng", ar: "رياح" },
+      { hanzi: "慢慢", pinyin: "mànmàn", ar: "ببطء" },
+      { hanzi: "吹", pinyin: "chuī", ar: "يهب / ينفخ" },
+      { hanzi: "進來", pinyin: "jìnlái", ar: "يدخل" },
+      { hanzi: "一個人", pinyin: "yí ge rén", ar: "وحيداً / شخص واحد" },
+      { hanzi: "房間", pinyin: "fángjiān", ar: "غرفة" },
+      { hanzi: "打開", pinyin: "dǎkāi", ar: "يفتح" },
+      { hanzi: "中文", pinyin: "Zhōngwén", ar: "اللغة الصينية" },
+      { hanzi: "課本", pinyin: "kèběn", ar: "كتاب دراسي" },
+      { hanzi: "今天", pinyin: "jīntiān", ar: "اليوم" },
+      { hanzi: "學", pinyin: "xué", ar: "يتعلم / يدرس" },
+      { hanzi: "開始", pinyin: "kāishǐ", ar: "يبدأ" },
+      { hanzi: "六點", pinyin: "liù diǎn", ar: "الساعة السادسة" },
+      { hanzi: "累", pinyin: "lèi", ar: "متعب" },
+      { hanzi: "沒關係", pinyin: "méi guānxi", ar: "لا بأس" },
+      { hanzi: "我們", pinyin: "wǒmen", ar: "نحن" },
+      { hanzi: "可以", pinyin: "kěyǐ", ar: "يمكن" },
+      { hanzi: "喝", pinyin: "hē", ar: "يشرب" },
+      { hanzi: "咖啡", pinyin: "kāfēi", ar: "قهوة" },
+      { hanzi: "牛奶", pinyin: "niúnǎi", ar: "حليب" },
+      { hanzi: "一邊", pinyin: "yìbiān", ar: "بينما / في نفس الوقت" },
+      { hanzi: "看", pinyin: "kàn", ar: "ينظر / يقرأ" },
+      { hanzi: "發呆", pinyin: "fādāi", ar: "يسرح" },
+      { hanzi: "要不要", pinyin: "yào bú yào", ar: "هل تريد؟" },
+      { hanzi: "一起", pinyin: "yìqǐ", ar: "معاً" },
+      { hanzi: "去", pinyin: "qù", ar: "يذهب" },
+      { hanzi: "吃", pinyin: "chī", ar: "يأكل" },
+      { hanzi: "晚飯", pinyin: "wǎnfàn", ar: "العشاء" },
+      { hanzi: "說", pinyin: "shuō", ar: "يقول / يتكلم" },
+      { hanzi: "有一點", pinyin: "yǒu yì diǎn", ar: "قليلاً" },
+      { hanzi: "難", pinyin: "nán", ar: "صعب" },
+      { hanzi: "一直", pinyin: "yìzhí", ar: "باستمرار / دائماً" },
+      { hanzi: "沒有", pinyin: "méiyǒu", ar: "لا يوجد / لم" },
+      { hanzi: "放棄", pinyin: "fàngqì", ar: "يستسلم" },
+      { hanzi: "想要", pinyin: "xiǎng yào", ar: "يريد" },
+      { hanzi: "一碗", pinyin: "yì wǎn", ar: "وعاء واحد" },
+      { hanzi: "牛肉麵", pinyin: "niúròumiàn", ar: "نودلز باللحم البقري" },
+      { hanzi: "還要", pinyin: "hái yào", ar: "يريد أيضاً" },
+      { hanzi: "一杯", pinyin: "yì bēi", ar: "كوب واحد" },
+      { hanzi: "熱奶茶", pinyin: "rè nǎichá", ar: "شاي بالحليب ساخن" },
+      { hanzi: "餐廳", pinyin: "cāntīng", ar: "مطعم" },
+      { hanzi: "裡", pinyin: "lǐ", ar: "داخل" },
+      { hanzi: "有人", pinyin: "yǒu rén", ar: "هناك شخص" },
+      { hanzi: "說話", pinyin: "shuōhuà", ar: "يتحدث" },
+      { hanzi: "覺得", pinyin: "juéde", ar: "يشعر / يعتقد" },
+      { hanzi: "太", pinyin: "tài", ar: "كثيراً / جداً" },
+      { hanzi: "冷氣房", pinyin: "lěngqìfáng", ar: "غرفة مكيفة" },
+      { hanzi: "涼快", pinyin: "liángkuai", ar: "منعش / بارد لطيف" },
+      { hanzi: "像", pinyin: "xiàng", ar: "مثل / يشبه" },
+      { hanzi: "沙漠", pinyin: "shāmò", ar: "صحراء" },
+      { hanzi: "腦海", pinyin: "nǎohǎi", ar: "الذهن" },
+      { hanzi: "別", pinyin: "bié", ar: "لا تفعل" },
+      { hanzi: "害怕", pinyin: "hàipà", ar: "يخاف" },
+      { hanzi: "最", pinyin: "zuì", ar: "الأكثر" },
+      { hanzi: "喜歡", pinyin: "xǐhuān", ar: "يحب" },
+      { hanzi: "什麼", pinyin: "shénme", ar: "ماذا" },
+      { hanzi: "季節", pinyin: "jìjié", ar: "فصل / موسم" },
+      { hanzi: "安靜", pinyin: "ānjìng", ar: "هادئ" },
+      { hanzi: "想", pinyin: "xiǎng", ar: "يفكر / يريد" },
+      { hanzi: "久", pinyin: "jiǔ", ar: "وقت طويل" },
+      { hanzi: "冬天", pinyin: "dōngtiān", ar: "الشتاء" },
+      { hanzi: "因為", pinyin: "yīnwèi", ar: "لأن" },
+      { hanzi: "科威特", pinyin: "Kēwēitè", ar: "الكويت" },
+      { hanzi: "夏天", pinyin: "xiàtiān", ar: "الصيف" },
+      { hanzi: "台灣", pinyin: "Táiwān", ar: "تايوان" },
+      { hanzi: "夜市", pinyin: "yèshì", ar: "سوق ليلي" },
+      { hanzi: "好玩", pinyin: "hǎowán", ar: "ممتع" },
+      { hanzi: "笑", pinyin: "xiào", ar: "يضحك / يبتسم" },
+      { hanzi: "住", pinyin: "zhù", ar: "يسكن / يعيش" },
+      { hanzi: "遠", pinyin: "yuǎn", ar: "بعيد" },
+      { hanzi: "早飯", pinyin: "zǎofàn", ar: "الفطور" },
+      { hanzi: "過", pinyin: "guò", ar: "تجربة سابقة" },
+      { hanzi: "豆漿", pinyin: "dòujiāng", ar: "حليب الصويا" },
+      { hanzi: "油條", pinyin: "yóutiáo", ar: "عجينة مقلية" },
+      { hanzi: "紅茶", pinyin: "hóngchá", ar: "شاي أسود" },
+      { hanzi: "有一天", pinyin: "yǒu yì tiān", ar: "في يوم من الأيام" },
+      { hanzi: "真的", pinyin: "zhēnde", ar: "حقاً" },
+      { hanzi: "坐", pinyin: "zuò", ar: "يجلس" },
+      { hanzi: "台北", pinyin: "Táiběi", ar: "تايبيه" },
+      { hanzi: "點餐", pinyin: "diǎn cān", ar: "يطلب الطعام" },
+      { hanzi: "八點半", pinyin: "bā diǎn bàn", ar: "الثامنة والنصف" },
+      { hanzi: "還", pinyin: "hái", ar: "ما زال / أيضاً" },
+      { hanzi: "結束", pinyin: "jiéshù", ar: "ينتهي" },
+      { hanzi: "故事", pinyin: "gùshi", ar: "قصة" },
+      { hanzi: "完", pinyin: "wán", ar: "ينتهي / يكتمل" },
+      { hanzi: "越來越", pinyin: "yuè lái yuè", ar: "أكثر فأكثر" },
+      { hanzi: "勇敢", pinyin: "yǒnggǎn", ar: "شجاع" },
+      { hanzi: "地方", pinyin: "dìfang", ar: "مكان" },
+      { hanzi: "陪", pinyin: "péi", ar: "يرافق" },
+      { hanzi: "晚安", pinyin: "wǎn’ān", ar: "تصبح على خير" },
+      { hanzi: "明天", pinyin: "míngtiān", ar: "غداً" },
+      { hanzi: "再", pinyin: "zài", ar: "مرة أخرى" }
+    ];
+
+    const lyrics = [
+      ["MUNA，晚上六點了。", "MUNA, wǎnshàng liù diǎn le."],
+      ["外面很熱，可是風慢慢吹進來。", "Wàimiàn hěn rè, kěshì fēng mànmàn chuī jìnlái."],
+      ["你一個人在科威特的房間裡，", "Nǐ yí ge rén zài Kēwēitè de fángjiān lǐ,"],
+      ["打開中文課本，想起今天學的中文。", "Dǎkāi Zhōngwén kèběn, xiǎng qǐ jīntiān xué de Zhōngwén."],
+      ["現在，歌開始了。", "Xiànzài, gē kāishǐ le."],
+      ["今天晚上，我們不只是學中文。", "Jīntiān wǎnshàng, wǒmen bú zhǐ shì xué Zhōngwén."],
+      ["我們要去吃晚飯。", "Wǒmen yào qù chī wǎnfàn."],
+      ["我們要聊季節。", "Wǒmen yào liáo jìjié."],
+      ["我們要慢慢習慣，一個新的語言。", "Wǒmen yào mànmàn xíguàn, yí ge xīn de yǔyán."],
+      ["慢慢來，中文不會跑走。", "Mànmàn lái, Zhōngwén bú huì pǎo zǒu."],
+      ["現在晚上六點了，你一個人在房間裡。", "Xiànzài wǎnshàng liù diǎn le, nǐ yí ge rén zài fángjiān lǐ."],
+      ["外面的風沙很安靜，手機的音樂輕輕響起。", "Wàimiàn de fēngshā hěn ānjìng, shǒujī de yīnyuè qīngqīng xiǎng qǐ."],
+      ["你說：老師，我今天有一點累。", "Nǐ shuō: Lǎoshī, wǒ jīntiān yǒu yì diǎn lèi."],
+      ["我說：沒關係，我們慢慢學也可以。", "Wǒ shuō: Méi guānxi, wǒmen mànmàn xué yě kěyǐ."],
+      ["你喝咖啡，還有牛奶。", "Nǐ hē kāfēi, hái yǒu niúnǎi."],
+      ["一邊看中文，一邊發呆。", "Yìbiān kàn Zhōngwén, yìbiān fādāi."],
+      ["要不要一起去吃晚飯？", "Yào bú yào yìqǐ qù chī wǎnfàn?"],
+      ["要不要一起說中文？", "Yào bú yào yìqǐ shuō Zhōngwén?"],
+      ["雖然中文有一點難，可是你一直沒有放棄。", "Suīrán Zhōngwén yǒu yì diǎn nán, kěshì nǐ yìzhí méiyǒu fàngqì."],
+      ["我想要一碗牛肉麵，還要一杯熱奶茶。", "Wǒ xiǎng yào yì wǎn niúròumiàn, hái yào yì bēi rè nǎichá."],
+      ["晚上八點的餐廳裡，有人慢慢說著話。", "Wǎnshàng bā diǎn de cāntīng lǐ, yǒu rén mànmàn shuō zhe huà."],
+      ["你覺得夏天太熱了，可是冷氣房很涼快。", "Nǐ juéde xiàtiān tài rè le, kěshì lěngqìfáng hěn liángkuai."],
+      ["中文像沙漠晚上的風，慢慢吹進你的腦海。", "Zhōngwén xiàng shāmò wǎnshàng de fēng, mànmàn chuī jìn nǐ de nǎohǎi."],
+      ["MUNA，別害怕。", "MUNA, bié hàipà."],
+      ["你最喜歡什麼季節？", "Nǐ zuì xǐhuān shénme jìjié?"],
+      ["你安靜想了很久。", "Nǐ ānjìng xiǎng le hěn jiǔ."],
+      ["我喜歡冬天，因為科威特的夏天太熱了。", "Wǒ xǐhuān dōngtiān, yīnwèi Kēwēitè de xiàtiān tài rè le."],
+      ["台灣的夏天也很熱，可是夜市很好玩。", "Táiwān de xiàtiān yě hěn rè, kěshì yèshì hěn hǎowán."],
+      ["你也笑了。", "Nǐ yě xiào le."],
+      ["雖然我們住得很遠，可是現在，我們一起吃早飯。", "Suīrán wǒmen zhù de hěn yuǎn, kěshì xiànzài, wǒmen yìqǐ chī zǎofàn."],
+      ["一起吃晚飯，一起學中文。", "Yìqǐ chī wǎnfàn, yìqǐ xué Zhōngwén."],
+      ["你沒有去過台灣，可是你已經知道豆漿、油條、牛肉麵，還有晚上的紅茶。", "Nǐ méiyǒu qù guò Táiwān, kěshì nǐ yǐjīng zhīdào dòujiāng, yóutiáo, niúròumiàn, hái yǒu wǎnshàng de hóngchá."],
+      ["有一天，你可能真的會坐在台北的餐廳裡。", "Yǒu yì tiān, nǐ kěnéng zhēnde huì zuò zài Táiběi de cāntīng lǐ."],
+      ["慢慢點餐：我要一碗牛肉麵，還要一杯奶茶。", "Mànmàn diǎn cān: Wǒ yào yì wǎn niúròumiàn, hái yào yì bēi nǎichá."],
+      ["現在幾點了？現在晚上八點半。", "Xiànzài jǐ diǎn le? Xiànzài wǎnshàng bā diǎn bàn."],
+      ["中文課還沒有結束，故事也還沒完。", "Zhōngwén kè hái méiyǒu jiéshù, gùshi yě hái méi wán."],
+      ["雖然今天有一點累，可是你越來越勇敢。", "Suīrán jīntiān yǒu yì diǎn lèi, kěshì nǐ yuè lái yuè yǒnggǎn."],
+      ["在很遠很遠的地方，有人陪你一起慢慢學。", "Zài hěn yuǎn hěn yuǎn de dìfang, yǒu rén péi nǐ yìqǐ mànmàn xué."],
+      ["MUNA，晚安。明天我們再一起說中文。", "MUNA, wǎn’ān. Míngtiān wǒmen zài yìqǐ shuō Zhōngwén."]
+    ];
+
+    let shuffledCards = [];
+    let currentIndex = 0;
+    let score = 0;
+    let answered = false;
+
+    const hanziEl = document.getElementById("hanzi");
+    const pinyinEl = document.getElementById("pinyin");
+    const optionsEl = document.getElementById("options");
+    const feedbackEl = document.getElementById("feedback");
+    const scoreEl = document.getElementById("score");
+    const questionNumberEl = document.getElementById("questionNumber");
+    const totalQuestionsEl = document.getElementById("totalQuestions");
+    const quizAreaEl = document.getElementById("quizArea");
+    const resultScreenEl = document.getElementById("resultScreen");
+    const finalScoreEl = document.getElementById("finalScore");
+    const finalMessageEl = document.getElementById("finalMessage");
+    const lyricsEl = document.getElementById("lyrics");
+
+    function shuffle(array) {
+      return [...array].sort(() => Math.random() - 0.5);
+    }
+
+    function renderLyrics() {
+      lyricsEl.innerHTML = lyrics.map(line => `
+        <div class="lyrics-block">
+          <div class="lyric-hanzi">${line[0]}</div>
+          <div class="lyric-pinyin">${line[1]}</div>
+        </div>
+      `).join("");
+    }
+
+    function startGameWithMusic() {
+      document.getElementById("welcomeScreen").style.display = "none";
+      document.getElementById("mainApp").style.display = "grid";
+      const music = document.getElementById("bgMusic");
+      music.volume = 0.28;
+      music.play().catch(() => {
+        feedbackEl.textContent = "اضغطي مرة أخرى إذا لم يبدأ الصوت.";
+      });
+      restartGame();
+    }
+
+    function restartGame() {
+      shuffledCards = shuffle(cards);
+      currentIndex = 0;
+      score = 0;
+      answered = false;
+      totalQuestionsEl.textContent = shuffledCards.length;
+      scoreEl.textContent = score;
+      quizAreaEl.style.display = "flex";
+      resultScreenEl.style.display = "none";
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      answered = false;
+      const current = shuffledCards[currentIndex];
+      questionNumberEl.textContent = currentIndex + 1;
+      hanziEl.textContent = current.hanzi;
+      pinyinEl.textContent = current.pinyin;
+      feedbackEl.textContent = "اختر الترجمة الصحيحة";
+
+      const wrongOptions = shuffle(cards.filter(card => card.ar !== current.ar)).slice(0, 2);
+      const choices = shuffle([current, ...wrongOptions]);
+
+      optionsEl.innerHTML = "";
+      choices.forEach(choice => {
+        const btn = document.createElement("button");
+        btn.className = "option-btn";
+        btn.textContent = choice.ar;
+        btn.onclick = () => checkAnswer(choice, current);
+        optionsEl.appendChild(btn);
+      });
+    }
+
+    function checkAnswer(choice, current) {
+      if (answered) return;
+      answered = true;
+
+      const buttons = document.querySelectorAll(".option-btn");
+      buttons.forEach(btn => {
+        btn.disabled = true;
+
+        if (btn.textContent === current.ar) {
+          btn.classList.add("correct-answer");
+        }
+
+        if (btn.textContent === choice.ar && choice.ar !== current.ar) {
+          btn.classList.add("wrong-answer");
+        }
+      });
+
+      if (choice.ar === current.ar) {
+        score++;
+        scoreEl.textContent = score;
+        feedbackEl.textContent = "صحيح! ممتاز!";
+      } else {
+        feedbackEl.textContent = `خطأ. الإجابة الصحيحة هي: ${current.ar}`;
+      }
+
+      setTimeout(() => {
+        currentIndex++;
+        if (currentIndex >= shuffledCards.length) {
+          showResult();
+        } else {
+          renderQuestion();
+        }
+      }, 1500);
+    }
+
+    function showResult() {
+      const percent = Math.round((score / shuffledCards.length) * 100);
+      quizAreaEl.style.display = "none";
+      resultScreenEl.style.display = "block";
+      finalScoreEl.textContent = percent;
+      finalMessageEl.textContent = percent >= 70 ? "太好了！" : "再接再厲！";
+    }
+
+    renderLyrics();
+  </script>
+</body>
+</html>
